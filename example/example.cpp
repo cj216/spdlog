@@ -13,6 +13,7 @@
 
 void async_example();
 void syslog_example();
+void multi_sink_example();
 
 namespace spd = spdlog;
 int main(int, char*[])
@@ -61,6 +62,10 @@ int main(int, char*[])
         SPDLOG_TRACE(console, "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}", 1, 3.23);
         SPDLOG_DEBUG(console, "Enabled only #ifdef SPDLOG_DEBUG_ON.. {} ,{}", 1, 3.23);
 
+
+		// One loger with multi-sink
+		multi_sink_example();
+
         // Asynchronous logging is very fast..
         // Just call spdlog::set_async_mode(q_size) and all created loggers from now on will be asynchronous..
         async_example();
@@ -101,6 +106,22 @@ void syslog_example()
 #endif
 }
 
+
+void multi_sink_example()
+{
+
+	std::vector<spdlog::sink_ptr> sinks;
+	bool force_flush = true;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
+	sinks.push_back(std::make_shared<spdlog::sinks::simple_file_sink_mt>("logs/debug_only.log", force_flush));
+	sinks[0]->set_level(spd::level::info);// accept log level : info+
+	sinks[1]->set_level(spd::level::debug, spd::level::debug);// accept log level : debug only
+
+	auto logger = std::make_shared<spdlog::logger>("muti-sink-loger", begin(sinks), end(sinks));
+	logger->set_level(spd::level::debug);
+	logger->debug("this is a debug message");
+	logger->info("this is a info message");
+}
 
 // Example of user defined class with operator<<
 class some_class {};

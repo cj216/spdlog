@@ -25,7 +25,7 @@ template<class Mutex>
 class base_sink:public sink
 {
 public:
-    base_sink():_mutex() {}
+    base_sink():_mutex(),_enabled_level_min(spdlog::level::trace),_enabled_level_max(spdlog::level::off) {}
     virtual ~base_sink() = default;
 
     base_sink(const base_sink&) = delete;
@@ -33,13 +33,28 @@ public:
 
     void log(const details::log_msg& msg) override
     {
-        std::lock_guard<Mutex> lock(_mutex);
-        _sink_it(msg);
+        if(should_sink_it(msg)){
+            std::lock_guard<Mutex> lock(_mutex);
+            _sink_it(msg);
+        }
+    }
+    // set log_msg level for this shink. not thread-safe
+    // defalut msg level : [spdlog::level::trace,spdlog::level::off]
+    void set_level(level::level_enum min,level::level_enum max)override
+    {
+        _enabled_level_min=min;
+        _enabled_level_max=max;
     }
 
+    bool  should_sink_it(const details::log_msg& msg)const
+    {
+        return (msg.level >= _enabled_level_min)  && (msg.level <= _enabled_level_max);
+    }
 protected:
     virtual void _sink_it(const details::log_msg& msg) = 0;
     Mutex _mutex;
+    spdlog::level::level_enum _enabled_level_min;
+    spdlog::level::level_enum _enabled_level_max;
 };
 }
 }

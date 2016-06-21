@@ -32,6 +32,7 @@ public:
 
     virtual void log(const details::log_msg& msg) override;
     virtual void flush() override;
+    virtual void set_level(level::level_enum min,level::level_enum max)override;
 
     void set_color(level::level_enum level, const std::string& color);
 
@@ -104,7 +105,10 @@ inline void ansicolor_sink::set_color(level::level_enum level, const std::string
 {
     colors_[level] = color;
 }
-
+inline void ansicolor_sink::set_level(level::level_enum min,level::level_enum max)
+{
+    sink_->set_level(min,max);
+}
 inline ansicolor_sink::~ansicolor_sink()
 {
     flush();
@@ -112,4 +116,3 @@ inline ansicolor_sink::~ansicolor_sink()
 
 } // namespace sinks
 } // namespace spdlog
-

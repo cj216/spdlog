@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <spdlog/common.h>
 #include <spdlog/details/log_msg.h>
 
 namespace spdlog
@@ -18,7 +19,9 @@ public:
     virtual ~sink() {}
     virtual void log(const details::log_msg& msg) = 0;
     virtual void flush() = 0;
+
+	// Set the backend (sink) log level filter.
+    virtual void set_level(level::level_enum min,level::level_enum max=spdlog::level::off)=0;
 };
 }
 }
-
