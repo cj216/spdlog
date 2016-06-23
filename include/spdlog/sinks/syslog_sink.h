@@ -30,7 +30,7 @@ class syslog_sink : public sink
 public:
     //
     syslog_sink(const std::string& ident = "", int syslog_option=0, int syslog_facility=LOG_USER):
-        _ident(ident)
+        _ident(ident), _enabled_level_min(spdlog::level::trace), _enabled_level_max(spdlog::level::off)
     {
         _priorities[static_cast<int>(level::trace)] = LOG_DEBUG;
         _priorities[static_cast<int>(level::debug)] = LOG_DEBUG;
@@ -56,18 +56,30 @@ public:
 
     void log(const details::log_msg &msg) override
     {
-        ::syslog(syslog_prio_from_level(msg), "%s", msg.raw.str().c_str());
+		if (should_sink_it(msg)) {
+			::syslog(syslog_prio_from_level(msg), "%s", msg.raw.str().c_str());
+		}
     }
 
     void flush() override
     {
     }
+	void set_level(level::level_enum min, level::level_enum max)override
+	{
+		_enabled_level_min = min;
+		_enabled_level_max = max;
+	}
 
-
+	bool  should_sink_it(const details::log_msg& msg)const
+	{
+		return (msg.level >= _enabled_level_min) && (msg.level <= _enabled_level_max);
+	}
 private:
     std::array<int, 10> _priorities;
     //must store the ident because the man says openlog might use the pointer as is and not a string copy
-    const std::string _ident;
+	const std::string _ident;
+	spdlog::level::level_enum _enabled_level_min;
+	spdlog::level::level_enum _enabled_level_max;
 
     //
     // Simply maps spdlog's log level to syslog priority level.
